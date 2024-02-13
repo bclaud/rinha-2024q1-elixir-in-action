@@ -1,0 +1,14 @@
+version: "3.5"
+services:
+  api1: &api
+    image: rinha:latest
+    hostname: api1
+    environment:
+      RELEASE_COOKIE: "random"
+      ERL_MAX_PORTS: 512
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "150MB"
+
