@@ -18,7 +18,22 @@ defmodule Rinha do
 
   def transaction(cliente_id, _) when cliente_id > 5, do: {:error, :not_found}
 
-  def transaction(
+  def transaction(cliente_id, request) do
+    case Rinha.TransactionLock.check(cliente_id) do
+      false ->
+        Rinha.TransactionLock.acquire(cliente_id)
+        result = do_transaction(cliente_id, request)
+        Rinha.TransactionLock.release(cliente_id)
+
+        result
+
+      true ->
+        Process.sleep(50)
+        transaction(cliente_id, request)
+    end
+  end
+
+  def do_transaction(
         cliente_id,
         %{"valor" => valor, "tipo" => tipo, "descricao" => descricao} = _request
       ) do
@@ -68,5 +83,25 @@ defmodule Rinha do
 
   def request_example() do
     %{"valor" => 10, "tipo" => "c", "descricao" => "descricao"}
+  end
+end
+
+defmodule Rinha.TransactionLock do
+  use Agent
+
+  def start_link(initial_state \\ %{}) do
+    Agent.start_link(fn -> initial_state end, name: __MODULE__)
+  end
+
+  def acquire(id) do
+    Agent.update(__MODULE__, &Map.put(&1, id, true))
+  end
+
+  def release(id) do
+    Agent.update(__MODULE__, &Map.put(&1, id, false))
+  end
+
+  def check(id) do
+    Agent.get(__MODULE__, &Map.get(&1, id), :infinity)
   end
 end
