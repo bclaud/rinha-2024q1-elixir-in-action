@@ -4,13 +4,13 @@ defmodule Rinha.System do
       # TODO add GenServers
       [
         Rinha.Web,
-        {Rinha.Extrato,
+        {Rinha.Transacoes,
          %{
-           1 => %{transacoes: []},
-           2 => %{transacoes: []},
-           3 => %{transacoes: []},
-           4 => %{transacoes: []},
-           5 => %{transacoes: []}
+           1 => [],
+           2 => [],
+           3 => [],
+           4 => [],
+           5 => []
          }},
         {Rinha.Cliente,
          %{

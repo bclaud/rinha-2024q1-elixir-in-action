@@ -16,58 +16,57 @@ defmodule Rinha do
     :world
   end
 
+  def transaction(cliente_id, _) when cliente_id > 5, do: {:error, :not_found}
+
   def transaction(
         cliente_id,
-        %{"valor" => valor, "tipo" => tipo, "descricao" => descricao} = request
+        %{"valor" => valor, "tipo" => tipo, "descricao" => descricao} = _request
       ) do
     %{limite: limite, saldo: saldo} = cliente = Rinha.Cliente.get_by_id(cliente_id)
 
     case valor <= limite do
       true ->
-        Rinha.Extrato.update_statement(cliente_id, %{
+        novo_saldo = saldo - valor
+
+        Rinha.Transacoes.update_statement(cliente_id, %{
           valor: valor,
           tipo: tipo,
           descricao: descricao,
           realizada_em: DateTime.utc_now()
         })
 
-        Rinha.Cliente.update(cliente_id, %{cliente | saldo: saldo - valor})
+        Rinha.Cliente.update(cliente_id, %{cliente | saldo: novo_saldo})
 
-        :ok
+        {:ok, %{limite: limite, saldo: novo_saldo}}
 
       false ->
-        :bad_request
+        {:error, :bad_request}
     end
   end
 
+  def get_bank_statement(cliente_id) when cliente_id > 5, do: {:error, :not_found}
+
   def get_bank_statement(cliente_id) do
-    %{transacoes: transacoes} = Rinha.Extrato.get_by_client_id(cliente_id)
+    transacoes = Rinha.Transacoes.get_by_client_id(cliente_id)
 
-    cliente = Rinha.Cliente.get_by_id(cliente_id)
+    case Rinha.Cliente.get_by_id(cliente_id) do
+      nil ->
+        {:error, :not_found}
 
-    %{
-      saldo: %{
-        total: cliente.saldo,
-        data_extrato: DateTime.utc_now(),
-        limite: cliente.limite
-      },
-      ultimas_transacoes: Enum.take(transacoes, 10)
-    }
+      cliente ->
+        {:ok,
+         %{
+           saldo: %{
+             total: cliente.saldo,
+             data_extrato: DateTime.utc_now(),
+             limite: cliente.limite
+           },
+           ultimas_transacoes: Enum.take(transacoes, 10)
+         }}
+    end
   end
 
   def request_example() do
     %{"valor" => 10, "tipo" => "c", "descricao" => "descricao"}
   end
-end
-
-defmodule Rinha.Transacao do
-  defstruct auto_id: 1, limite: 0, nome: nil, date: Date.utc_today()
-
-  @type transacao :: %{id: pos_integer, limite: integer, nome: String.t(), date: Date.t()}
-  @type t :: %__MODULE__{
-          auto_id: pos_integer(),
-          limite: integer,
-          nome: String.t(),
-          date: Date.t()
-        }
 end
