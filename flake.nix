@@ -18,9 +18,9 @@
     eachSystem (system:
       let
         inherit (nixpkgs.lib) optional;
-        pkgs = import nixpkgs {
+        pkgs = (import nixpkgs {
           inherit system;
-        };
+        }).pkgsMusl;
 
         nix2containerPkgs = nix2container.packages.${system};
       in
@@ -46,7 +46,6 @@
                 "USER=nobody"
                 "LC_ALL=en_US.UTF-8"
                 "LANG=en_US.UTF-8"
-                "LOCALE_ARCHIVE=${if pkgs.stdenv.isLinux then "${pkgs.glibcLocalesUtf8}/lib/locale/locale-archive" else ""}"
                 "RELEASE_COOKIE=RINHA"
               ];
               ExposedPorts = {
@@ -60,8 +59,8 @@
 
         devShells.default = mkShell {
           name = "rinha-elixir-shell";
-          buildInputs = with pkgs; [ beam.packages.erlang_26.elixir_1_16 ];
-          LOCALE_ARCHIVE = if pkgs.stdenv.isLinux then "${pkgs.glibcLocalesUtf8}/lib/locale/locale-archive" else "";
+          buildInputs = with pkgs; [ beam_minimal.packages.erlang_26.elixir_1_16 ];
+          #LOCALE_ARCHIVE = if pkgs.stdenv.isLinux then "${pkgs.glibcLocalesUtf8}/lib/locale/locale-archive" else "";
         };
       }
     );
