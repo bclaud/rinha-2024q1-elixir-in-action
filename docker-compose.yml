@@ -1,6 +1,8 @@
 version: "3.5"
 services:
   api1: &api
+    ports: 
+      - 9999:9999
     image: rinha:latest
     hostname: api1
     environment:
@@ -10,5 +12,5 @@ services:
       resources:
         limits:
           cpus: "0.5"
-          memory: "150MB"
+          memory: "100MB"
 
