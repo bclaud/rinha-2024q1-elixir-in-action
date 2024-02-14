@@ -12,5 +12,5 @@ services:
       resources:
         limits:
           cpus: "0.5"
-          memory: "100MB"
+          memory: "50MB"
 
